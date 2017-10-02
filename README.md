@@ -1,7 +1,10 @@
 # py-search-hn
 Search Hacker News with Python
 
-`from search_hn import SearchHN as hn`
+```
+from search_hn import SearchHN
+hn = SearchHN()
+```
 
 
 String together methods to build queries
