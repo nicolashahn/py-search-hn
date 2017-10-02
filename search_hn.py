@@ -34,14 +34,16 @@ class Hit(object):
 
     @classmethod
     def get_type_cls_from_fields(cls, fields):
+        type_map = {'story': Story,
+                    'poll': Poll,
+                    'pollopt': PollOption,
+                    'comment': Comment,
+                    'user': User}
         if '_tags' in fields:
-            type_map = {'story': Story,
-                        'poll': Poll,
-                        'pollopt': PollOption,
-                        'comment': Comment,
-                        'user': User}
             type_key = list(type_map.keys() & fields['_tags'])[0]
             return type_map[type_key]
+        if 'type' in fields:
+            return type_map[fields['type']]
         if 'username' in fields:
             return User
         return cls
@@ -54,7 +56,7 @@ class Hit(object):
     # 'public' instance methods - use these in your code
 
     def get_full(self):
-        '''get by id gives more information than a search list item'''
+        '''get by id gives more information than a search list item for some types'''
         if hasattr(self, 'objectID'):
             return SearchHN().item(self.objectID).get()
 
@@ -76,8 +78,8 @@ class Story(Hit):
 class Poll(Story):
 
     def get_poll_options(self):
-        # TODO
-        # return SearchHN().poll_options()
+        # TODO this doesn't work because pollopts don't have a parent ref
+        # return SearchHN().story(self.objectID).poll_options().get()
         pass
 
 
@@ -270,7 +272,7 @@ class SearchHN(object):
     
     def get_latest_whoishiring_thread(self):
         '''will be wrong if whoishiring posts non-'who is hiring' thread/comment'''
-        return self.whoishiring_threads().latest().get()[0]
+        return self.whoishiring_threads().latest().get_first()
 
 
 if __name__ == "__main__":
