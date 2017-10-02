@@ -66,6 +66,9 @@ class Hit(object):
 
 class Story(Hit):
 
+    def get_author(self):
+        return SearchHN().user(self.author).get()
+
     def get_story_comments(self):
         return SearchHN().story(self.objectID).comments().get()
 
