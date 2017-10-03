@@ -244,7 +244,6 @@ class SearchHN(object):
     def get(self, reset=True):
         '''reset as kwarg bc may want to use same query but increment page count'''
         r = self._request()
-        print(self)
         if self.single_item:
             result = Hit.make(r.json())
         else: 
