@@ -14,6 +14,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 max_hits_per_page = 1000
 
+
 def attr_list(obj):
     members = inspect.getmembers(obj, lambda a: not(inspect.isroutine(a)))
     return [m[0] for m in members if not(m[0].startswith('__'))]
@@ -80,7 +81,7 @@ class Poll(Story):
     def get_poll_options(self):
         # TODO this doesn't work because pollopts don't have a parent ref
         # return SearchHN().story(self.objectID).poll_options().get()
-        pass
+        raise NotImplementedError
 
 
 class PollOption(Hit):
@@ -154,17 +155,20 @@ class SearchHN(object):
         for key in [k for k in json.keys() if k != 'hits']:
             setattr(self, key, json[key])
 
-    def _get_tags_str(self):
+    def _get_field_str(self, field):
         '''because requests.get() does this wrong'''
-        if 'tags' in self.param_obj:
-            return '&tags=' + ','.join(self.param_obj['tags'])
-        return ''
+        result = ''
+        if field in self.param_obj:
+            result = '&{}='.format(field) + ','.join(self.param_obj[field])
+            self.param_obj.pop(field, None)
+        return result
 
     def _get_full_url(self):
-        tags_str = self._get_tags_str()
-        self.param_obj.pop('tags', None)
+        tags_str = self._get_field_str('tags')
+        numeric_str = self._get_field_str('numericFilters')
         param_str_minus_tags = urllib.parse.urlencode(self.param_obj)
-        return '{}?{}{}'.format(self.base_url, param_str_minus_tags, tags_str)
+        return '{}?{}{}{}'.format(
+                self.base_url, param_str_minus_tags, numeric_str, tags_str)
 
     def _request(self):
         full_url = self._get_full_url()
@@ -172,6 +176,8 @@ class SearchHN(object):
         return requests.get(full_url)
 
     # "public" methods - use these
+    # design choice: should methods that don't take an arg besides self
+    # have @property? Currently do not, for the sake of consistency
 
     def search(self, query_str):
         self.param_obj['query'] = query_str
@@ -238,6 +244,7 @@ class SearchHN(object):
     def get(self, reset=True):
         '''reset as kwarg bc may want to use same query but increment page count'''
         r = self._request()
+        print(self)
         if self.single_item:
             result = Hit.make(r.json())
         else: 
@@ -271,7 +278,7 @@ class SearchHN(object):
         return self.search(query).comments().get()
     
     def get_latest_whoishiring_thread(self):
-        '''will be wrong if whoishiring posts non-'who is hiring' thread/comment'''
+        '''will be wrong if user whoishiring posts non-'who is hiring' thread'''
         return self.whoishiring_threads().latest().get_first()
 
 
