@@ -71,3 +71,14 @@ for story in stories:
 # What the world’s financial bigwigs think about Bitcoin
 # Why Bitcoin and Ethereum will soon be everywhere (for reals)
 # ...
+
+# get all comments from the latest "Who is hiring" thread:
+whoishiring = (hn
+               .get_latest_whoishiring_thread()
+               .get_story_comments()
+)
+python_jobs = [post for post in whoishiring if 'python' in post.comment_text.lower()]
+
+print('{} jobs available, {} python jobs available'.format(len(whoishiring), len(python_jobs)))
+# Output:
+# 70 jobs available, 45 python jobs available
