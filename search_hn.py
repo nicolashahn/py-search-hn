@@ -73,7 +73,7 @@ class Story(Hit):
         return SearchHN().user(self.author).get()
 
     def get_story_comments(self):
-        return SearchHN().story(self.objectID).comments().get()
+        return SearchHN().story(self.objectID).comments().max_hits_per_page().get()
 
 
 class Poll(Story):
