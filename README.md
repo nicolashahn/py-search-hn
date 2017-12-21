@@ -39,4 +39,4 @@ hn.get_item(1234)
 hn.get_user('nicolashahn')
 ```
 
-Check out the [source](search_hn.py) to see available methods or [example.py](example.py) for more examples - better docs soon
+Check out the [source](search_hn.py#L178) to see available methods or [example.py](example.py) for more examples - better docs soon
