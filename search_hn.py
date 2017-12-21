@@ -216,7 +216,7 @@ class SearchHN(object):
         return self.author('whoishiring').stories()
 
     def story(self, story_id):
-        return self._add_tag('story_()'.format(story_id))
+        return self._add_tag('story_{}'.format(story_id))
 
     def item(self, object_id):
         self.base_url = item_url + str(object_id)
