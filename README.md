@@ -39,4 +39,6 @@ hn.get_item(1234)
 hn.get_user('nicolashahn')
 ```
 
+[Example of how to turn the items returned by a query into a plaintext file, one item per line](get_user_comments.py)
+
 Check out the [source](search_hn.py#L178) to see available methods or [example.py](example.py) for more examples - better docs soon
