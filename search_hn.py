@@ -213,7 +213,10 @@ class SearchHN(object):
         return self._add_tag('author_{}'.format(author))
 
     def whoishiring_threads(self):
-        return self.author('whoishiring').stories()
+        return self.author('whoishiring').stories().search('hiring')
+
+    def whowantstobehired_threads(self):
+        return self.author('whoishiring').stories().search('hired')
 
     def story(self, story_id):
         return self._add_tag('story_{}'.format(story_id))
@@ -277,8 +280,10 @@ class SearchHN(object):
         return self.search(query).comments().get()
     
     def get_latest_whoishiring_thread(self):
-        '''will be wrong if user whoishiring posts non-'who is hiring' thread'''
         return self.whoishiring_threads().latest().get_first()
+
+    def get_latest_whowantstobehired_thread(self):
+        return self.whowantstobehired_threads().latest().get_first()
 
 
 if __name__ == "__main__":
