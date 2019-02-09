@@ -74,7 +74,7 @@ for story in stories:
     print(story.title)
 '''
 Blockstream CEO wants 25,000 BTC ($100M) bet over future of Bitcoin Segwit 1X/2X
-What the world’s financial bigwigs think about Bitcoin
+What the world's financial bigwigs think about Bitcoin
 Why Bitcoin and Ethereum will soon be everywhere (for reals)
 ...
 '''
