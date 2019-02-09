@@ -8,7 +8,7 @@ hn_url = 'http://hn.algolia.com/api/v1/'
 item_url = '{}items/'.format(hn_url)
 user_url = '{}users/'.format(hn_url)
 search_url = '{}search'.format(hn_url)
-date_url =  '{}_by_date'.format(search_url)
+date_url = '{}_by_date'.format(search_url)
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -18,6 +18,10 @@ max_hits_per_page = 1000
 def attr_list(obj):
     members = inspect.getmembers(obj, lambda a: not(inspect.isroutine(a)))
     return [m[0] for m in members if not(m[0].startswith('__'))]
+
+
+class QueryFailed(BaseException):
+    """ Raised when the server request fails. """
 
 
 class Hit(object):
@@ -85,7 +89,7 @@ class Poll(Story):
 
 
 class PollOption(Hit):
-    
+
     def get_parent_poll(self):
         return SearchHN().item(self.parent_id).get()
         pass
@@ -112,7 +116,7 @@ class User(Hit):
 
 class SearchHN(object):
     '''creates and executes the query'''
-    
+
     def __init__(self):
         self.param_obj = {}
         self.base_url = search_url
@@ -125,13 +129,17 @@ class SearchHN(object):
     def _json(self):
         return {attr: self.__dict__[attr] for attr in attr_list(self)}
 
+    def _add_numeric_filter(self, filter):
+        if 'numericFilters' not in self.param_obj:
+            self.param_obj['numericFilters'] = []
+        self.param_obj['numericFilters'].append(filter)
+        return self
+
     def _created_at_i(self, symbol, ts):
-        self._add_numeric_filter()
         if type(ts) == datetime.datetime:
             ts = ts.timestamp()
         created = 'created_at_i{}{}'.format(symbol, ts)
-        self.param_obj['numericFilters'].append(created)
-        return self
+        return self._add_numeric_filter(created)
 
     def _add_tag(self, tag):
         if 'tags' not in self.param_obj:
@@ -139,24 +147,18 @@ class SearchHN(object):
         self.param_obj['tags'].append(tag)
         return self
 
-    def _add_numeric_filter(self):
-        if 'numericFilters' not in self.param_obj:
-            self.param_obj['numericFilters'] = []
-        return self
-
     def _single(self):
-        '''getting single item/user by id/username, not searching'''
-        param_obj = {}
+        ''' Get single item/user by id/username, not searching. '''
         self.single_item = True
         return self
 
     def _add_request_fields(self, json):
-        '''add request's response fields after executing a search'''
+        ''' Add request's response fields after executing a search. '''
         for key in [k for k in json.keys() if k != 'hits']:
             setattr(self, key, json[key])
 
     def _get_field_str(self, field):
-        '''because requests.get() does this wrong'''
+        ''' Because requests.get() does this wrong. '''
         result = ''
         if field in self.param_obj:
             result = '&{}='.format(field) + ','.join(self.param_obj[field])
@@ -168,7 +170,7 @@ class SearchHN(object):
         numeric_str = self._get_field_str('numericFilters')
         param_str_minus_tags = urllib.parse.urlencode(self.param_obj)
         return '{}?{}{}{}'.format(
-                self.base_url, param_str_minus_tags, numeric_str, tags_str)
+            self.base_url, param_str_minus_tags, numeric_str, tags_str)
 
     def _request(self):
         full_url = self._get_full_url()
@@ -183,6 +185,12 @@ class SearchHN(object):
         self.param_obj['query'] = query_str
         return self
 
+    def min_points(self, points):
+        return self._add_numeric_filter('points>={}'.format(points))
+
+    def min_comments(self, comments):
+        return self._add_numeric_filter('num_comments>={}'.format(comments))
+
     def latest(self):
         self.base_url = date_url
         return self
@@ -192,7 +200,7 @@ class SearchHN(object):
 
     def created_before(self, timestamp):
         return self._created_at_i('<', timestamp)
-    
+
     def created_between(self, ts1, ts2):
         self.created_after(ts1)
         return self.created_before(ts2)
@@ -245,14 +253,19 @@ class SearchHN(object):
         return self
 
     def get(self, reset=True):
-        '''reset as kwarg bc may want to use same query but increment page count'''
-        r = self._request()
+        '''
+        `reset` as kwarg because a user may want to use same query but
+        increment page count.
+        '''
+        resp = self._request()
+        if not resp.ok:
+            raise QueryFailed
         if self.single_item:
-            result = Hit.make(r.json())
-        else: 
-            result = [Hit.make(hit) for hit in r.json()['hits']]
-            self._add_request_fields(r.json())
-        if reset: 
+            result = Hit.make(resp.json())
+        else:
+            result = [Hit.make(hit) for hit in resp.json()['hits']]
+            self._add_request_fields(resp.json())
+        if reset:
             self.reset()
         return result
 
@@ -278,7 +291,7 @@ class SearchHN(object):
 
     def search_comments(self, query):
         return self.search(query).comments().get()
-    
+
     def get_latest_whoishiring_thread(self):
         return self.whoishiring_threads().latest().get_first()
 
@@ -287,6 +300,6 @@ class SearchHN(object):
 
 
 if __name__ == "__main__":
-    #TODO make cli
+    # TODO make cli
     hn = SearchHN()
     print(hn.latest().stories().get_first())
