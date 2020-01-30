@@ -6,24 +6,20 @@ from search_hn import SearchHN
 
 hn = SearchHN()
 
-def clean(text):
-    return (
-        BeautifulSoup(
-            text
-            .replace('<p>', ' ')
-        ).get_text()
-        .replace('\n', ' ')
-    )
 
-comments = (hn
-            .comments()
-            .author('nicolashahn')
-            .max_hits_per_page() # 1000 items per query max
-            .get()
+def clean(text):
+    return BeautifulSoup(text.replace("<p>", " ")).get_text().replace("\n", " ")
+
+
+comments = (
+    hn.comments()
+    .author("nicolashahn")
+    .max_hits_per_page()  # 1000 items per query max
+    .get()
 )
 
-with open('nicolashahn_comments.txt', 'w') as file:
+with open("nicolashahn_comments.txt", "w") as file:
     for comment in comments:
         cleaned_text = clean(comment.comment_text)
         print(cleaned_text)
-        file.write(cleaned_text + '\n')
+        file.write(cleaned_text + "\n")
